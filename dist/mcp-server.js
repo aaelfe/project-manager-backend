@@ -6,9 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 dotenv.config();
-// Add this right after the imports
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
-console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 // Initialize Supabase client
@@ -381,7 +378,6 @@ class ProjectMCPServer {
     async run() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        console.log('Project Manager MCP server running on stdio');
     }
 }
 // Start the server

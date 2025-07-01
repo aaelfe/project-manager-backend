@@ -1,6 +1,3 @@
-// Cloud MCP Server for Project Management
-// server.ts
-
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createClient } from '@supabase/supabase-js';
@@ -488,7 +485,6 @@ class ProjectMCPServer {
     async run() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        console.log('Project Manager MCP server running on stdio');
     }
 }
 
