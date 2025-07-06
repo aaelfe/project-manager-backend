@@ -84,6 +84,7 @@ class ProjectMCPServer {
                     status: z.enum(["todo", "in-progress", "done", "blocked", "cancelled"]).default("todo"),
                     priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
                     due_date: z.string().optional().describe("Due date (ISO format)"),
+                    epic: z.string().optional().describe("Epic name for task organization"),
                     markdown_file: z.string().optional().describe("Path to markdown file in repo"),
                     github_repo: z.string().optional().describe("GitHub repo (owner/repo)"),
                     tags: z.array(z.string()).optional().describe("Task tags")
@@ -103,6 +104,7 @@ class ProjectMCPServer {
                     status: z.enum(["todo", "in-progress", "done", "blocked", "cancelled"]).optional(),
                     priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
                     due_date: z.string().optional().describe("Due date (ISO format)"),
+                    epic: z.string().optional().describe("Epic name for task organization"),
                     markdown_file: z.string().optional(),
                     tags: z.array(z.string()).optional()
                 }
@@ -130,7 +132,8 @@ class ProjectMCPServer {
                     description: z.string().optional().describe("Project description"),
                     status: z.enum(["active", "completed", "archived"]).default("active"),
                     markdown_file: z.string().optional().describe("Path to project markdown file"),
-                    github_repo: z.string().optional().describe("GitHub repo (owner/repo)")
+                    github_repo: z.string().optional().describe("GitHub repo (owner/repo)"),
+                    working_directory: z.string().optional().describe("Working directory path")
                 }
             },
             async (args) => await this.createProject(args)
@@ -145,7 +148,8 @@ class ProjectMCPServer {
                     name: z.string().optional(),
                     description: z.string().optional(),
                     status: z.enum(["active", "completed", "archived"]).optional(),
-                    markdown_file: z.string().optional()
+                    markdown_file: z.string().optional(),
+                    working_directory: z.string().optional().describe("Working directory path")
                 }
             },
             async (args) => await this.updateProject(args)
@@ -172,7 +176,8 @@ class ProjectMCPServer {
                     status: z.array(z.enum(["todo", "in-progress", "done", "blocked", "cancelled"])).optional(),
                     project_id: z.string().optional(),
                     priority: z.array(z.enum(["low", "medium", "high", "urgent"])).optional(),
-                    tags: z.array(z.string()).optional(),
+                    epic: z.string().optional().describe("Filter by epic name"),
+                    tags: z.array(z.string()).optional().describe("Filter by tags (AND logic - task must have all specified tags)"),
                     due_before: z.string().optional().describe("Due before date (ISO format)"),
                     due_after: z.string().optional().describe("Due after date (ISO format)"),
                     search_text: z.string().optional().describe("Search in title/description")
@@ -191,6 +196,21 @@ class ProjectMCPServer {
                 }
             },
             async (args) => await this.addTaskComment(args)
+        );
+        this.server.registerTool(
+            "search_projects",
+            {
+                title: "Search Projects",
+                description: "Search projects with multi-field matching (github_repo, working_directory, name)",
+                inputSchema: {
+                    github_repo: z.string().optional().describe("Filter by GitHub repo (owner/repo)"),
+                    working_directory: z.string().optional().describe("Filter by working directory path"),
+                    name: z.string().optional().describe("Search in project name"),
+                    status: z.array(z.enum(["active", "completed", "archived"])).optional().describe("Filter by project status"),
+                    search_text: z.string().optional().describe("Search across name, description, github_repo, and working_directory")
+                }
+            },
+            async (args) => await this.searchProjects(args)
         );
     }
 
@@ -400,6 +420,15 @@ class ProjectMCPServer {
             query = query.in('priority', args.priority);
         }
 
+        if (args.epic) {
+            query = query.eq('epic', args.epic);
+        }
+
+        if (args.tags && args.tags.length > 0) {
+            // For AND logic with tags, we need to ensure all specified tags are present
+            query = query.contains('tags', args.tags);
+        }
+
         if (args.due_before) {
             query = query.lte('due_date', args.due_before);
         }
@@ -439,6 +468,46 @@ class ProjectMCPServer {
             content: [{
                 type: "text" as const,
                 text: `Added comment to task ${task_id}`
+            }]
+        };
+    }
+
+    private async searchProjects(args: any) {
+        let query = supabase.from('project_summary').select('*');
+
+        // Prioritize exact matches for github_repo
+        if (args.github_repo) {
+            query = query.eq('github_repo', args.github_repo);
+        }
+
+        // Filter by working_directory (exact or path match)
+        if (args.working_directory) {
+            query = query.eq('working_directory', args.working_directory);
+        }
+
+        // Filter by project name (exact match)
+        if (args.name) {
+            query = query.eq('name', args.name);
+        }
+
+        // Filter by status
+        if (args.status && args.status.length > 0) {
+            query = query.in('status', args.status);
+        }
+
+        // Search across multiple fields
+        if (args.search_text) {
+            query = query.or(`name.ilike.%${args.search_text}%,description.ilike.%${args.search_text}%,github_repo.ilike.%${args.search_text}%,working_directory.ilike.%${args.search_text}%`);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) throw new Error(`Project search failed: ${error.message}`);
+
+        return {
+            content: [{
+                type: "text" as const,
+                text: `Found ${data.length} projects:\n` + JSON.stringify(data, null, 2)
             }]
         };
     }

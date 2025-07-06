@@ -44,6 +44,7 @@ export type Database = {
           name: string
           status: string
           updated_at: string | null
+          working_directory: string | null
         }
         Insert: {
           created_at?: string | null
@@ -54,6 +55,7 @@ export type Database = {
           name: string
           status?: string
           updated_at?: string | null
+          working_directory?: string | null
         }
         Update: {
           created_at?: string | null
@@ -64,6 +66,7 @@ export type Database = {
           name?: string
           status?: string
           updated_at?: string | null
+          working_directory?: string | null
         }
         Relationships: []
       }
@@ -219,6 +222,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           due_date: string | null
+          epic: string | null
           github_repo: string | null
           id: string
           markdown_file: string | null
@@ -232,6 +236,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          epic?: string | null
           github_repo?: string | null
           id?: string
           markdown_file?: string | null
@@ -245,6 +250,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          epic?: string | null
           github_repo?: string | null
           id?: string
           markdown_file?: string | null
@@ -331,6 +337,7 @@ export type Database = {
           completed_tasks: number | null
           created_at: string | null
           description: string | null
+          github_repo: string | null
           id: string | null
           markdown_file: string | null
           name: string | null
@@ -339,6 +346,7 @@ export type Database = {
           total_tasks: number | null
           total_time_minutes: number | null
           updated_at: string | null
+          working_directory: string | null
         }
         Relationships: []
       }
@@ -347,6 +355,7 @@ export type Database = {
           created_at: string | null
           dependency_count: number | null
           due_date: string | null
+          epic: string | null
           id: string | null
           markdown_file: string | null
           priority: string | null
