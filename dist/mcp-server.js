@@ -1,5 +1,3 @@
-// Cloud MCP Server for Project Management
-// server.ts
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createClient } from '@supabase/supabase-js';
