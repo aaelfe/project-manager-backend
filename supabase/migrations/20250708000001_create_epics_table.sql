@@ -51,15 +51,16 @@ WHERE tasks.epic = e.title AND tasks.project_id = e.project_id;
 -- Create index for epic_id on tasks
 CREATE INDEX idx_tasks_epic_id ON tasks(epic_id);
 
--- Remove the old epic string column
-ALTER TABLE tasks DROP COLUMN epic;
+-- Drop the view that depends on the epic column FIRST
+DROP VIEW IF EXISTS task_summary;
 
 -- Drop the old epic index
 DROP INDEX IF EXISTS idx_tasks_epic;
 
--- Update task_summary view to include epic information
-DROP VIEW task_summary;
+-- Remove the old epic string column
+ALTER TABLE tasks DROP COLUMN epic;
 
+-- Update task_summary view to include epic information
 CREATE VIEW task_summary AS
 SELECT 
     t.id,
